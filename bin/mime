@@ -1,0 +1,44 @@
+# Text-based formats
+html text/html
+htm text/html
+css text/css
+js application/javascript
+json application/json
+xml application/xml
+txt text/plain
+
+# Image formats
+png image/png
+jpg image/jpeg
+jpeg image/jpeg
+gif image/gif
+bmp image/bmp
+ico image/vnd.microsoft.icon
+webp image/webp
+svg image/svgxml
+
+# Audio formats
+mp3 audio/mpeg
+ogg audio/ogg
+wav audio/wav
+aac audio/aac
+
+# Video formats
+mp4 video/mp4
+webm video/webm
+avi video/xmsvideo
+mov video/quicktime
+mkv video/xmatroska
+flv video/xflv
+wmv video/xmswmv
+mpg video/mpeg
+
+# Document formats
+pdf application/pdf
+
+# Compressed formats
+zip application/zip
+gz application/gzip
+tar application/xtar
+7z application/x-7z-compressed
+rar application/x-rar-compressed

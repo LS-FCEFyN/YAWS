@@ -19,18 +19,13 @@ client::client()
 bool client::receiveParse()
 {
     std::vector<char> tmp(4096);
-    ssize_t received = recv(sockfd, &tmp[0],
-                            tmp.size(), 0);
+    ssize_t received = recv(sockfd, &tmp[0], tmp.size(), 0);
 
-    if (received > static_cast<ssize_t>(tmp.size()))
+    while (received > static_cast<ssize_t>(tmp.size()))
     {
         size_t remaining = tmp.size() - received;
-        tmp.resize(tmp.size() + remaining);
-        received = recv(sockfd, &tmp[0] + received, remaining, 0);
-    }
-    else if (received <= 0)
-    {
-        return false;
+        tmp.resize(tmp.size() * 2);
+        received += recv(sockfd, &tmp[0] + received, remaining, 0);
     }
 
     tmp.push_back('\0');

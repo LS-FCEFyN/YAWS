@@ -73,12 +73,18 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "csignal": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "ranges": "cpp"
     },
     "makefile.launchConfigurations": [
         {
             "cwd": "/home/loretta/server_modified/bin",
             "binaryPath": "/home/loretta/server_modified/bin/server",
+            "binaryArgs": []
+        },
+        {
+            "cwd": "/home/lore/YAWS/bin",
+            "binaryPath": "/home/lore/YAWS/bin/server",
             "binaryArgs": []
         }
     ]

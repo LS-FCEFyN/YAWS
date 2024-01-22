@@ -11,6 +11,7 @@
 // Project-specific headers
 #include "client.hpp"
 #include "server.hpp"
+#include "thread_pool.hpp"
 
 int main()
 {
@@ -25,19 +26,18 @@ int main()
 
     server srv;
 
+    ThreadPool pool(4);
+
     while (true)
     {
-        auto c = new client();
+        std::shared_ptr<client> c = std::make_shared<client>();
 
         socklen_t addr_len = c->getAddressLength();
         c->setSocket(accept(srv.getSocket(), reinterpret_cast<struct sockaddr *>(&c->getAddress()),
                             &addr_len));
 
-        std::shared_ptr<client> cPtr(c);
-
-        std::thread clientThread(&server::handleClient, &srv, cPtr);
-
-        clientThread.detach();
+        pool.enqueue([&srv, c]()
+                     { srv.handleClient(c); });
     }
 
     return 0;

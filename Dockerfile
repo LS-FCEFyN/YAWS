@@ -2,7 +2,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-RUN apk update && apk add gcc make musl-dev
+RUN apk update && apk add g++ make musl-dev
 
 COPY Makefile /app/
 COPY src /app/src

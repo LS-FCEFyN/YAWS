@@ -13,7 +13,11 @@
 // System headers
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/sendfile.h>
 #include <unistd.h>
+
+// GCC Extensions
+#include <ext/stdio_filebuf.h>
 
 server::server(std::optional<std::string> port) : srvRouter("routes.conf")
 {
@@ -141,7 +145,14 @@ void server::serveRequest(
     return;
   }
 
-  std::ifstream file(absolutePath, std::ios::in);
+  std::ifstream file(absolutePath, std::ios::binary);
+  int fd = static_cast<__gnu_cxx::stdio_filebuf<char>*>(file.rdbuf())->fd();
+
+  file.seekg(0, std::ios::end);
+  long fileSize = file.tellg();
+  file.seekg(0, std::ios::beg);
+
+  off_t offset = 0;
 
   if (client->getRequest().contains("Range"))
   {
@@ -154,10 +165,6 @@ void server::serveRequest(
     {
       iss >> end;
     }
-
-    file.seekg(0, std::ios::end);
-    long fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
 
     if (start < 0 || (end >= 0 && end < start) ||
         (end >= fileSize && start != fileSize))
@@ -177,7 +184,7 @@ void server::serveRequest(
       end = fileSize - 1;
     }
 
-    file.seekg(start, std::ios::beg);
+
     size_t cl = end - start + 1;
     std::stringstream response;
     response << "HTTP/1.1  206 Partial Content\r\n"
@@ -190,15 +197,10 @@ void server::serveRequest(
     std::string responseStr = response.str();
     send(client->getSocket(), responseStr.c_str(), responseStr.size(), 0);
 
-    std::vector<char> buf(cl);
-    file.read(buf.data(), cl);
-    send(client->getSocket(), buf.data(), file.gcount(), 0);
+    sendfile64(client->getSocket(), fd, &start, cl);
   }
   else
   {
-    file.seekg(0, std::ios::end);
-    size_t fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
 
     std::stringstream response;
     response << "HTTP/1.1  200 OK\r\n"
@@ -208,12 +210,8 @@ void server::serveRequest(
 
     std::string responseStr = response.str();
     send(client->getSocket(), responseStr.c_str(), responseStr.size(), 0);
-
-    std::vector<char> buf(fileSize);
-    file.read(buf.data(), fileSize);
-    send(client->getSocket(), buf.data(), fileSize, 0);
+    sendfile64(client->getSocket(), fd, &offset, fileSize);
   }
-
   file.close();
 }
 

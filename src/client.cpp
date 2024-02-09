@@ -18,19 +18,17 @@ client::client()
 
 bool client::receiveParse()
 {
-    std::vector<char> tmp(4096);
-    ssize_t received = recv(sockfd, &tmp[0], tmp.size(), 0);
+    std::vector<char> buffer(4096);
+    ssize_t received = recv(sockfd, buffer.data(), buffer.size(), 0);
 
-    while (received > static_cast<ssize_t>(tmp.size()))
+    while (received > static_cast<ssize_t>(buffer.size()))
     {
-        size_t remaining = tmp.size() - received;
-        tmp.resize(tmp.size() * 2);
-        received += recv(sockfd, &tmp[0] + received, remaining, 0);
+        buffer.resize(buffer.size() * 2);
+        received += recv(sockfd, buffer.data() + received, buffer.size() - received, 0);
     }
 
-    tmp.push_back('\0');
-
-    const std::string tmpStr(tmp.begin(), tmp.end());
+    std::string tmpStr(buffer.begin(), buffer.end());
+    tmpStr.push_back('\0');
 
     std::size_t headerEnd = tmpStr.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
@@ -38,9 +36,9 @@ bool client::receiveParse()
         return false;
     }
 
+    std::istringstream requestLineStream(tmpStr.substr(0, headerEnd));
     std::string method, path, version;
-    std::istringstream requestLine(tmpStr.substr(0, headerEnd));
-    if (!(requestLine >> method >> path >> version))
+    if (!(requestLineStream >> method >> path >> version))
     {
         return false;
     }
@@ -51,18 +49,17 @@ bool client::receiveParse()
 
     std::size_t headerLine = tmpStr.find("\r\n");
 
-    while (headerLine < headerEnd)
+    while (headerLine != std::string::npos && headerLine < headerEnd)
     {
         std::size_t nextHeaderLine = tmpStr.find("\r\n", headerLine + 2);
-        std::istringstream requestLine(tmpStr.substr(headerLine + 2, nextHeaderLine - headerLine - 2));
+        std::istringstream headerLineStream(tmpStr.substr(headerLine + 2, nextHeaderLine - headerLine - 2));
         std::string header, value;
-        if (!(requestLine >> header >> value))
+        if (!(headerLineStream >> header >> value))
         {
             return false;
         }
 
         header.erase(std::remove(header.begin(), header.end(), ':'), header.end());
-
         request[header] = value;
 
         headerLine = nextHeaderLine;

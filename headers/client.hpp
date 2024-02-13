@@ -22,8 +22,6 @@ private:
     socklen_t addressLength;
     /// Storage for the socket address.
     struct sockaddr_storage address;
-    /// Buffer for storing the formatted address.
-    char addressBuffer[128];
     /// File descriptor for the socket connection.
     int sockfd;
     /// Request parameters stored as key-value pairs.

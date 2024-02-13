@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const projects = [
         {
             title: "YAWS",
-            description: "Yet Another Web Server<br>A simple web server written in C<br>It's the server that's powering this site!",
+            description: "Yet Another Web Server<br>A simple web server written in C++<br>It's the server that's powering this site!",
             logo: "/media/YAWS.jpeg"
         }
     ];

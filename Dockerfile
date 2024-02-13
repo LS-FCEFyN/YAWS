@@ -1,5 +1,4 @@
-# Stage 1: Build the application
-FROM alpine:latest AS builder
+FROM alpine:latest
 
 WORKDIR /app
 
@@ -8,17 +7,12 @@ RUN apk update && apk add g++ make musl-dev
 COPY Makefile /app/
 COPY src /app/src
 COPY headers /app/headers
+COPY bin /app/bin
 
-RUN make
-
-# Stage 2: Create the production image
-FROM alpine:latest
-
-WORKDIR /app
-
-COPY --from=builder /app/bin /app/bin
+RUN make -C /app
 
 EXPOSE 80
 
-CMD ["cd ./bin/"]
-CMD ["./bin/server"]
+WORKDIR /app/bin
+
+CMD ["./server"]

@@ -35,5 +35,14 @@ COPY --from=builder /app/bin/server /app/bin/server
 # Expose port
 EXPOSE  80
 
+# Add the sysctl command to allow binding to all ports
+RUN echo 'net.ipv4.ip_unprivileged_port_start=0' >> /etc/sysctl.conf
+
+# Apply the sysctl settings
+RUN sysctl -p
+
+# Switch to the non-root user
+USER appuser
+
 # Command to run the application
 CMD ["./server"]

@@ -29,8 +29,8 @@ RUN useradd -ms /bin/bash appuser
 # Set working directory
 WORKDIR /app/bin
 
-# Copy the compiled binary from the builder stage
-COPY --from=builder /app/bin/server /app/bin/server
+# Copy the bin folder from the builder stage
+COPY --from=builder /app/bin/ /app/
 
 # Expose port
 EXPOSE  80

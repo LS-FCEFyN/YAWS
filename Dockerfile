@@ -1,13 +1,12 @@
 # Stage  1: Build the application
-FROM archlinux:latest AS builder
+FROM alpine:latest AS builder
 
 WORKDIR /app
 
 # Install build dependencies
-RUN pacman -Syu --noconfirm gcc make && \
+RUN apk add --no-cache g++ make && \
     # Clean up to reduce image size
-    pacman -Scc --noconfirm && \
-    rm -rf /var/cache/pacman/pkg
+    rm -rf /var/cache/apk/*
 
 # Copy source code and headers
 COPY Makefile /app/
@@ -21,7 +20,10 @@ COPY bin /app/bin
 RUN make -C /app
 
 # Stage  2: Setup the runtime environment
-FROM archlinux:latest
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk add --no-cache libstdc++
 
 # Set working directory
 WORKDIR /app/bin
@@ -30,7 +32,7 @@ WORKDIR /app/bin
 COPY --from=builder /app/bin/ .
 
 # Expose port
-EXPOSE  80
+EXPOSE   80
 
 # Command to run the application
 CMD ["./server"]

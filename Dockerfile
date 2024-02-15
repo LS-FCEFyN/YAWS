@@ -30,7 +30,7 @@ RUN useradd -ms /bin/bash appuser
 WORKDIR /app/bin
 
 # Copy the bin folder from the builder stage
-COPY --from=builder /app/bin/ /app/
+COPY --from=builder /app/bin/ .
 
 # Expose port
 EXPOSE  80

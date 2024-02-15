@@ -23,9 +23,6 @@ RUN make -C /app
 # Stage  2: Setup the runtime environment
 FROM archlinux:latest
 
-# Create a non-root user
-RUN useradd -ms /bin/bash appuser
-
 # Set working directory
 WORKDIR /app/bin
 
@@ -34,9 +31,6 @@ COPY --from=builder /app/bin/ .
 
 # Expose port
 EXPOSE  80
-
-# Switch to the non-root user
-USER appuser
 
 # Command to run the application
 CMD ["./server"]

@@ -1,0 +1,49 @@
+{
+  "Musculacion": [
+    {
+      "title": "8 clases",
+      "description": "Una descripción to’ guapetona, chaval.",
+      "price": "$ 9'500.00"
+    },
+    {
+      "title": "12 clases",
+      "description": "Una descripción to’ guapetona, chaval.",
+      "price": "$ 10'000.00"
+    },
+    {
+      "title": "Pase Libre",
+      "description": "Una descripción to’ guapetona, chaval.",
+      "price": "$ 10'500.00"
+    }
+  ],
+  "Suplementos Deportivos & Snacks": [
+    {
+      "title": "Pre Entreno",
+      "price": "$ 16'500.00"
+    },
+    {
+      "title": "Post Entreno",
+      "price": "$ 1'200.00"
+    },
+    {
+      "title": "Proteina",
+      "price": "$ 16'600.00"
+    },
+    {
+      "title": "Amino",
+      "price": "$ 1'200.00"
+    },
+    {
+      "title": "Quemador",
+      "price": "$ 8'000.00"
+    },
+    {
+      "title": "Creatina",
+      "price": "$ 24'500.00"
+    },
+    {
+      "title": "Barra Proteica",
+      "price": "$ 1'000.00"
+    }
+  ]
+}

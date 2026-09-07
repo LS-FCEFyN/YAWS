@@ -1,28 +1,26 @@
-# Variables
-CC = g++
-CFLAGS = -std=c++20 -Wall -Wextra -Werror -pedantic -Os -fdata-sections -ffunction-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto -s -fno-ident -fno-asynchronous-unwind-tables
-LDFLAGS = -Wl,--gc-sections -Bsymbolic -Wl,--exclude-libs,ALL
-INCLUDES = -I headers
-SRC = src/main.cpp src/server.cpp src/client.cpp src/router.cpp
-OBJ = $(SRC:.cpp=.o)
-EXECUTABLE = bin/server
+CXX      := g++
+CXXFLAGS := -std=c++20 -Os -flto -fno-rtti -fno-ident -fno-use-cxa-atexit -ffunction-sections -fdata-sections -Wall -Wextra -Werror -Wpedantic -Iheaders
+LDFLAGS  := -pthread -flto -Wl,--gc-sections,--as-needed,--strip-all,-O2
 
-# Check if we're compiling on Alpine Linux
-IS_ALPINE := $(shell grep -qi Alpine /etc/os-release && echo yes || echo no)
+SRC_DIR  := src
+OBJ_DIR  := build
+TARGET   := yaws
 
-# If compiling on Alpine, define appropriate macros
-ifeq ($(IS_ALPINE),yes)
-    CFLAGS += -D_LARGEFILE64_SOURCE
-endif
+SRCS := $(wildcard $(SRC_DIR)/*.cpp)
+OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-# Rules
-all: $(EXECUTABLE)
+.PHONY: all clean
 
-$(EXECUTABLE): $(OBJ)
-	$(CC) $(LDFLAGS) $(OBJ) -o $(EXECUTABLE)
+all: $(TARGET)
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
 clean:
-	rm -f $(OBJ) $(EXECUTABLE)
+	rm -rf $(OBJ_DIR) $(TARGET)

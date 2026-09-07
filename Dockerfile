@@ -1,38 +1,27 @@
-# Stage  1: Build the application
-FROM alpine:latest AS builder
+FROM alpine:3.22 AS builder
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache g++ make && \
-    # Clean up to reduce image size
-    rm -rf /var/cache/apk/*
+RUN apk add --no-cache build-base upx
 
-# Copy source code and headers
-COPY Makefile /app/
-COPY src /app/src
-COPY headers /app/headers
+COPY Makefile ./
+COPY headers ./headers
+COPY src ./src
 
-# Copy the bin folder containing everything not code related
-COPY bin /app/bin
+RUN make && upx --best --lzma ./yaws
 
-# Build the application
-RUN make -C /app
+FROM alpine:3.22
 
-# Stage  2: Setup the runtime environment
-FROM alpine:latest
+RUN apk add --no-cache libstdc++ \
+	&& addgroup -S yaws \
+	&& adduser -S -G yaws yaws
 
-# Install runtime dependencies
-RUN apk add --no-cache libstdc++
+WORKDIR /app
+COPY --from=builder /app/yaws ./yaws
+COPY public ./public
 
-# Set working directory
-WORKDIR /app/bin
+USER yaws
+EXPOSE 8080
 
-# Copy the bin folder from the builder stage
-COPY --from=builder /app/bin/ .
-
-# Expose port
-EXPOSE   80
-
-# Command to run the application
-CMD ["./server"]
+ENTRYPOINT ["/app/yaws"]
+CMD ["--port", "8080"]

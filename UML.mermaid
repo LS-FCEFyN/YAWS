@@ -1,0 +1,180 @@
+%%{init: {"theme": "base", "themeVariables": {"mainBkg": "#EEEDFE", "nodeBorder": "#26215C", "lineColor": "#534AB7", "textColor": "#26215C", "classText": "#26215C", "edgeLabelBackground": "#EEEDFE"}}}%%
+classDiagram
+    class Client {
+        -int socket_fd
+        +Client(int socket_fd)
+        +~Client()
+        +get_socket_fd() int
+    }
+    note for Client "Move-only: copy deleted, move ctor/assign enabled"
+
+    namespace Http {
+        class Request {
+            -optional~Method~ method_
+            -string target_
+            -string version_
+            -unordered_map~string,string~ headers_
+            +parse(string_view raw) optional~Request~
+            +method() optional~Method~
+            +target() string
+            +version() string
+            +header(string_view name) optional~string_view~
+        }
+
+        class Response {
+            -StatusCode status_
+            -unordered_map~string,string~ headers_
+            -optional~string~ body_
+            +Response(StatusCode status)
+            +set_header(string name, string value) void
+            +set_body(string body) void
+            +serialize_headers() string
+            +body() optional~string~
+        }
+
+        class Method {
+            <<enumeration>>
+            Get
+            Head
+        }
+
+        class StatusCode {
+            <<enumeration>>
+            Ok
+            PartialContent
+            NotModified
+            BadRequest
+            Forbidden
+            NotFound
+            MethodNotAllowed
+            RangeNotSatisfiable
+            UriTooLong
+            InternalServerError
+            NotImplemented
+            ServiceUnavailable
+            HttpVersionNotSupported
+        }
+    }
+    note for Request "parse() is a static factory method"
+
+    namespace Concurrency {
+        class ThreadPool {
+            -vector~thread~ workers
+            -queue~packaged_task~ tasks
+            -mutex queue_mutex
+            -condition_variable condition
+            -bool stop
+            +ThreadPool(size_t num_threads)
+            +~ThreadPool()
+            +enqueue_task(Func task_fn) void
+        }
+    }
+
+    namespace Observer {
+        class ConnectionObserver {
+            <<interface>>
+            +on_connection_accepted(Client client) void
+        }
+
+        class ConnectionLogger {
+            +on_connection_accepted(Client client) void
+        }
+    }
+    note for ConnectionObserver "Observer pattern: side-effects only,<br/>cannot influence admission"
+
+    namespace OverloadHandling {
+        class CapacityGate {
+            <<interface>>
+            +active_connections() int
+            +max_connections() int
+            +wait_for_capacity() void
+        }
+
+        class ServerCapacityGate {
+            -mutex& mutex_
+            -condition_variable& cv_
+            -int& active_
+            -int max_
+            +ServerCapacityGate(mutex&, condition_variable&, int&, int)
+            +active_connections() int
+            +max_connections() int
+            +wait_for_capacity() void
+        }
+
+        class OverloadStrategy {
+            <<interface>>
+            +handle_overload(Client client, function admit, CapacityGate gate) void
+        }
+
+        class EnqueueAnywayStrategy {
+            +handle_overload(Client client, function admit, CapacityGate gate) void
+        }
+
+        class RejectOverloadStrategy {
+            +handle_overload(Client client, function admit, CapacityGate gate) void
+        }
+
+        class BlockOverloadStrategy {
+            +handle_overload(Client client, function admit, CapacityGate gate) void
+        }
+    }
+    note for CapacityGate "Decouples OverloadStrategy from Server:<br/>strategies see this, never Server itself"
+    note for OverloadStrategy "Strategy pattern: governs what happens<br/>once Server is at max_connections"
+
+    class Server {
+        -optional~string~ port
+        -int socket_fd
+        -int max_connections
+        -atomic~bool~ running
+        -unique_ptr~ThreadPool~ pool
+        -vector~shared_ptr~ConnectionObserver~~ observers
+        -unique_ptr~OverloadStrategy~ overload_strategy
+        -mutex capacity_mutex
+        -condition_variable capacity_cv
+        -int active_connections
+        -unique_ptr~Server~ instance
+        +get_instance(string port, int max_connections) Server
+        +start() void
+        +stop() void
+        +attach(ConnectionObserver observer) void
+        +set_overload_strategy(OverloadStrategy strategy) void
+        +Server(Server)
+        +operator=(Server) Server
+        +Server(Server&&)
+        +operator=(Server&&) Server
+        -Server(string port, int max_connections)
+        -~Server()
+        -accept_loop() void
+        -admit_connection(Client client) void
+        -handle_connection(Client client) void
+        -serve_file(Client client, Request request) void
+        -send_error(Client client, StatusCode status) void
+    }
+    note for Server "Singleton: private ctor/dtor, deleted copy/move.<br/>instance and get_instance() are static"
+
+    ConnectionLogger ..|> ConnectionObserver : realizes
+    ServerCapacityGate ..|> CapacityGate : realizes
+    EnqueueAnywayStrategy ..|> OverloadStrategy : realizes
+    RejectOverloadStrategy ..|> OverloadStrategy : realizes
+    BlockOverloadStrategy ..|> OverloadStrategy : realizes
+
+    ConnectionObserver ..> Client : parameter
+
+    Server "1" *-- "1" ThreadPool : owns, built lazily in start()
+    Server "1" o-- "0..*" ConnectionObserver : notifies on accept
+    Server "1" *-- "0..1" OverloadStrategy : delegates to when at capacity
+    Server ..> Client : creates in accept_loop()
+    Server ..> Request : parses in handle_connection()
+    Server ..> Response : builds in serve_file()/send_error()
+    Server ..> ServerCapacityGate : constructs on demand
+    Server ..> StatusCode : uses
+    Server ..> Method : checks for HEAD in serve_file()
+
+    OverloadStrategy ..> Client : parameter
+    OverloadStrategy ..> CapacityGate : queries/waits on
+
+    RejectOverloadStrategy ..> Response : builds 503 response
+    RejectOverloadStrategy ..> StatusCode : uses
+
+    Request ..> Method : uses
+    Response ..> StatusCode : uses

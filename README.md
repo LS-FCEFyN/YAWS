@@ -5,7 +5,8 @@ YAWS is a simple static web server written in C++ from scratch, created as a mea
 To compile the YAWS project, simply run the __make__ command in your terminal.
 
 # Usage
-After compiling, you can start the server by running the executable file named "server". Once running, the server will listen on port __80__ by default, this can be changed modifying __main.cpp__, and you can access it using your web browser or a tool like __cURL__. Only HTTP currently supported, although HTTPS is straight forward to implement.
+After compiling, you can start the server by running the executable file named "yaws". Once running, the server will listen on port __8080__ by default, this can be changed by passing down the CLI argument `-p | --port` followed by the desired port, and you can access it using your web browser or a tool like __cURL__. Only HTTP currently supported, although HTTPS should be straight forward to implement.
+For more CLI arguments launch the binary followed by `-h | --help` for a list of all supported parameters.
 
 # Mime types
 More mime types can be added modifying the file __mime__ any file requested to the server that does not have a known mime type will be returned with the following type __application/octet-stream__

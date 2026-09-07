@@ -19,6 +19,7 @@ RUN apk add --no-cache libstdc++ \
 WORKDIR /app
 COPY --from=builder /app/yaws ./yaws
 COPY public ./public
+COPY routes.conf ./routes.conf
 
 USER yaws
 EXPOSE 8080

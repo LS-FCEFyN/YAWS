@@ -336,7 +336,8 @@ void Server::handle_connection(std::shared_ptr<Client> client)
 void Server::serve_file(const std::shared_ptr<Client> &client, const Request &request)
 {
     const std::filesystem::path public_root = std::filesystem::weakly_canonical("public");
-    const std::string_view target = request.target();
+    const std::string_view requested_target = request.target();
+    const std::string_view target = this->router.resolve(requested_target).value_or(requested_target);
     const std::filesystem::path relative_target = target.starts_with('/') ?
         std::filesystem::path(target.substr(1)) : std::filesystem::path(target);
     const std::filesystem::path requested_path = public_root / relative_target;
@@ -380,7 +381,7 @@ void Server::serve_file(const std::shared_ptr<Client> &client, const Request &re
 
         Response response(StatusCode::PartialContent);
         response.set_header("Connection", "close");
-        response.set_header("Content-Type", std::string(mime_type_for(request.target())));
+        response.set_header("Content-Type", std::string(mime_type_for(target)));
         response.set_header("Content-Length", std::to_string(content_length));
         response.set_header("Content-Range", "bytes " + std::to_string(start) + "-" + std::to_string(end) +
                                                   "/" + std::to_string(file_size));
@@ -398,7 +399,7 @@ void Server::serve_file(const std::shared_ptr<Client> &client, const Request &re
 
     Response response(StatusCode::Ok);
     response.set_header("Connection", "close");
-    response.set_header("Content-Type", std::string(mime_type_for(request.target())));
+    response.set_header("Content-Type", std::string(mime_type_for(target)));
     response.set_header("Content-Length", std::to_string(file_size));
     response.set_header("Accept-Ranges", "bytes");
 

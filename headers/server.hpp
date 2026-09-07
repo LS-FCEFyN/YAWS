@@ -19,6 +19,7 @@
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "observer/connection_observer.hpp"
+#include "router.hpp"
 #include "strategy/overload_strategy.hpp"
 
 
@@ -106,6 +107,9 @@ private:
 
     /**
      * @brief Serves the requested file to the client, including range requests.
+     *
+     * The request's target is resolved through router first (e.g. "/" ->
+     * "/index.html"); if no route matches, the raw target is used as-is.
      * @param client The client connection to write the response to.
      * @param request The parsed HTTP request describing the requested resource.
      */
@@ -141,6 +145,8 @@ private:
     std::vector<std::shared_ptr<ConnectionObserver>> observers;
     /// Policy for handling connections accepted while at max_connections; null means "enqueue anyway".
     std::unique_ptr<OverloadStrategy> overload_strategy;
+    /// Routes consulted in serve_file() before falling back to the raw request target.
+    Router router;
     /// Guards active_connections and backs capacity_cv.
     std::mutex capacity_mutex;
     /// Notified whenever active_connections decreases, for BlockOverloadStrategy to wait on.

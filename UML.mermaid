@@ -121,6 +121,15 @@ classDiagram
     note for CapacityGate "Decouples OverloadStrategy from Server:<br/>strategies see this, never Server itself"
     note for OverloadStrategy "Strategy pattern: governs what happens<br/>once Server is at max_connections"
 
+    class Router {
+        -unordered_map~string,string~ routes_
+        +Router()
+        +resolve(string_view path) optional~string_view~
+        +size() size_t
+        -load_routes(string path) unordered_map~string,string~
+    }
+    note for Router "Routes loaded once at construction from routes.conf,<br/>read relative to the working directory"
+
     class Server {
         -optional~string~ port
         -int socket_fd
@@ -129,6 +138,7 @@ classDiagram
         -unique_ptr~ThreadPool~ pool
         -vector~shared_ptr~ConnectionObserver~~ observers
         -unique_ptr~OverloadStrategy~ overload_strategy
+        -Router router
         -mutex capacity_mutex
         -condition_variable capacity_cv
         -int active_connections
@@ -163,6 +173,7 @@ classDiagram
     Server "1" *-- "1" ThreadPool : owns, built lazily in start()
     Server "1" o-- "0..*" ConnectionObserver : notifies on accept
     Server "1" *-- "0..1" OverloadStrategy : delegates to when at capacity
+    Server "1" *-- "1" Router : owns, consulted in serve_file()
     Server ..> Client : creates in accept_loop()
     Server ..> Request : parses in handle_connection()
     Server ..> Response : builds in serve_file()/send_error()

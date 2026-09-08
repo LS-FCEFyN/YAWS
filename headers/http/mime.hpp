@@ -17,6 +17,7 @@ inline std::string_view mime_type_for(std::string_view path)
         {"txt", "text/plain"}, {"png", "image/png"}, {"jpg", "image/jpeg"},
         {"jpeg", "image/jpeg"}, {"gif", "image/gif"}, {"svg", "image/svg+xml"},
         {"ico", "image/x-icon"}, {"pdf", "application/pdf"},
+        {"mp4", "video/mp4"},
     };
 
     const auto dot = path.find_last_of('.');
